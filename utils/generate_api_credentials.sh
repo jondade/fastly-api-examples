@@ -11,12 +11,29 @@ if [[ "$FASTLY_API_DEBUG" == "TRUE" ]]; then
   curlopts="-v"
 fi
 
+# Set a couple of useful variables
+curlopts="-s $curlopts"
+directory="$HOME/.fastly"
+filename="${directory}/api_credentials.sh"
+
+# Set up the directory and file for a known good baseline
+if [[ ! -d $directory ]]; then
+  mkdir $directory
+fi
+
+if [[ -f $filename ]]; then
+  mv $filename $filename$(date +-%s)
+fi
+
 # Fetch user credentials
 echo "Please enter your username:"
 read username
 
 echo "Please enter your password:"
 read -s password
+
+echo "EMAIL='$username'" >> $filename
+echo "PASSWORD='$password'" >> $filename
 
 # Fetch a nice new token
 out=$(curl $curlopts -X POST \
@@ -43,7 +60,7 @@ if [[ $out == *'Invalid one-time password'* ]]; then
        -H "Fastly-OTP: ${otp}" \
        -d "scope=global" \
        https://api.fastly.com/tokens)
- echo "test"
+ echo
 fi
 
 # Debug output
@@ -52,21 +69,25 @@ if [[ "$FASTLY_API_DEBUG" == "TRUE" ]]; then
 fi
 
 if [[ $out == *'access_token'* ]]; then
-
-  # Set a couple of useful variables
-  directory="$HOME/.fastly"
-  filename="${directory}/api_credentials.sh"
-
-  # Set up the directory and file for a known good baseline
-  if [[ ! -d $directory ]]; then
-    mkdir $directory
-  fi
-
-  if [[ ! -f $filename ]]; then
-    echo "TOKEN=''" > $filename
-    echo "SERVICE_ID''" >> $filename
-  fi
-
   token=$(echo $out | sed -e 's/.*access_token":"\([^"]*\)","name.*/\1/')
-  sed -i -e "s/TOKEN=''/TOKEN='${token}'/" $filename
+  echo "TOKEN='$token'" >> $filename
+fi
+
+echo "Do you want to choose a service to use with the api examples? Y/N [N]"
+read choice
+choice=$(echo $choice | tr '[:upper:]' '[:lower:]')
+if [[ $choice == "y"* ]]; then
+  source $filename
+  out=$(curl $curlopts -H "Fastly-Key: $TOKEN" https://api.fastly.com/services)
+  newout=$(echo $out \
+    | tr -s '}}}}' '[\n*1]' \
+    | sed -e '$d' | sed -e '$d' \
+    | sed -e 's#.*\("id".*\)#\1#' \
+    | sed -e '/"customer"/d' \
+    | sed -e 's#.*"id":"\([^"]*\)".*"name":"\([^"]*\).*#\1, \2#')
+  echo "$newout" | nl
+  read -p "Which service do you want to use? " service
+  sid=$(echo "$newout" | sed -n "$service"p | sed -e 's#\([^,]*\),.*#\1#')
+  echo "SERVICE='$sid'" >> $filename
+  echo "Contents written to $filename"
 fi
