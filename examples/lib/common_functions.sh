@@ -40,7 +40,8 @@ function set_debug() {
 
 function check_credentials() {
   if [[ ! -f $CREDENTIALS_FILE ]]; then
-    echo "No token found at $CREDENTIALS_FILE. Please run generate_api_credentials.sh to create them."
+    echo "No token found at $CREDENTIALS_FILE. \
+          Please run generate_api_credentials.sh to create them."
     exit 1
   fi
 }
