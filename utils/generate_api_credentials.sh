@@ -71,8 +71,11 @@ fi
 if [[ $out == *'access_token'* ]]; then
   token=$(echo $out | sed -e 's/.*access_token":"\([^"]*\)","name.*/\1/')
   echo "TOKEN='$token'" >> $filename
+  cid=$(echo $out | sed -e 's/.*customer_id":"\([^"]*\)","name.*/\1/')
+  echo "CUSTOMER='$cid'" >> $filename
 fi
 
+#TODO: add option to create a new service for testing with
 echo "Do you want to choose a service to use with the api examples? Y/N [N]"
 read choice
 choice=$(echo $choice | tr '[:upper:]' '[:lower:]')
