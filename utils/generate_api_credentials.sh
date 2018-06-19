@@ -76,12 +76,12 @@ if [[ $out == *'access_token'* ]]; then
 fi
 
 #TODO: add option to create a new service for testing with
-echo "Do you want to choose a service to use with the api examples? Y/N [N]"
+echo -n "Select a service? y/N > "
 read choice
 choice=$(echo $choice | tr '[:upper:]' '[:lower:]')
 if [[ $choice == "y"* ]]; then
   source $filename
-  out=$(curl $curlopts -H "Fastly-Key: $TOKEN" https://api.fastly.com/services)
+  out=$(curl $curlopts -H "Fastly-Key: $TOKEN" https://api.fastly.com/service)
   newout=$(echo $out \
     | tr -s '}}}}' '[\n*1]' \
     | sed -e '$d' | sed -e '$d' \
@@ -93,4 +93,13 @@ if [[ $choice == "y"* ]]; then
   sid=$(echo "$newout" | sed -n "$service"p | sed -e 's#\([^,]*\),.*#\1#')
   echo "SERVICE='$sid'" >> $filename
   echo "Contents written to $filename"
+else
+  echo -n "Do you want to create a new service? Y/n > "
+  read choice
+  choice=$(echo $choice | tr '[:upper:]' '[:lower:]')
+  if [[ $choice == "y"* ]]; then
+    source $filename
+    out=$(curl $curlopts -H "Fastly-Key: $TOKEN" -X POST -H 'Accept:application/json' https://api.fastly.com/service -d "name=API-testing")
+    echo $out
+  fi
 fi

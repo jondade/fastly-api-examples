@@ -4,5 +4,6 @@
 # generate / update this file
 EMAIL='some_user@example.com'
 PASSWORD='some_secure_password'
+CUSTOMER_ID='a1a1a1a1a1a1a1a1a1'
 TOKEN='1234567890abcdef'
 SERVICE_ID='a1a1a1a1a1a1a1a1a1'
